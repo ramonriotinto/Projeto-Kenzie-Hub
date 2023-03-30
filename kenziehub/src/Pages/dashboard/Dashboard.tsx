@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { DivPaiDashboard, Conteudo, Navegacao, Header, FormTec } from "./style";
 import { UserContext } from "../../context/UserContext";
 import ReactModal from "react-modal";
@@ -7,109 +7,98 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import "./styleModal.css";
 import { TechContext, iTechs } from "../../context/TechContext";
-import { Api } from "../../services/api";
 
 ReactModal.setAppElement("#root");
 
 const schema = yup.object({
-  title: yup.string().required("Título Obrigatório"),
+    title: yup.string().required("Título Obrigatório"),
 });
 
 export const Dashboard = () => {
-  const { modal, abrirModal, fecharModal, btnSair } = useContext(UserContext);
+    const { usuarios, modal, abrirModal, fecharModal, btnSair } =
+        useContext(UserContext);
 
-  const { usuarioLogado, setUsuarioLogado, createTech, deleteTech } =
-    useContext(TechContext);
+    const { createTech, deleteTech } = useContext(TechContext);
 
-  const token = localStorage.getItem("@kenzieHub:token");
-  useEffect(() => {
-    Api.defaults.headers.authorization = `Bearer ${token}`;
-    Api.get("/profile")
-      .then((res) => {
-        setUsuarioLogado(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [usuarioLogado]);
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<iTechs>({ resolver: yupResolver(schema) });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<iTechs>({ resolver: yupResolver(schema) });
+    const onSubmitTec = (data: iTechs) => createTech(data);
 
-  const onSubmitTec = (data: iTechs) => createTech(data);
-
-  return (
-    <DivPaiDashboard id="main-conteudo">
-      <Navegacao>
-        <div>
-          <h1>Kenzie Hub</h1>
-          <button onClick={() => btnSair()}>Sair</button>
-        </div>
-        <nav></nav>
-      </Navegacao>
-      <Header>
-        <div>
-          <h2>Olá, {usuarioLogado.name}</h2>
-          <p>{usuarioLogado.course_module}</p>
-        </div>
-      </Header>
-      <Conteudo>
-        <div>
-          <h3>Tecnologias</h3>
-          <button onClick={() => abrirModal()}>+</button>
-        </div>
-        {usuarioLogado.techs?.length > 0 ? (
-          <ul>
-            {usuarioLogado.techs?.map(({ id, title, status }) => (
-              <li key={id}>
+    return (
+        <DivPaiDashboard id="main-conteudo">
+            <Navegacao>
                 <div>
-                  <h3 className="tituloT">{title}</h3>
-                  <p>{status}</p>
+                    <h1>Kenzie Hub</h1>
+                    <button onClick={() => btnSair()}>Sair</button>
                 </div>
-                <button onClick={() => deleteTech(id)}>X</button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <h4>Adicone Alguma Tarefa</h4>
-        )}
-      </Conteudo>
+                <nav></nav>
+            </Navegacao>
+            <Header>
+                <div>
+                    <h2>Olá, {usuarios.name}</h2>
+                    <p>{usuarios.course_module}</p>
+                </div>
+            </Header>
+            <Conteudo>
+                <div>
+                    <h3>Tecnologias</h3>
+                    <button onClick={() => abrirModal()}>+</button>
+                </div>
+                {usuarios.techs?.length > 0 ? (
+                    <ul>
+                        {usuarios.techs?.map(({ id, title, status }) => (
+                            <li key={id}>
+                                <div>
+                                    <h3 className="tituloT">{title}</h3>
+                                    <p>{status}</p>
+                                </div>
+                                <button onClick={() => deleteTech(id)}>
+                                    X
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <h4>Adicone Alguma Tarefa</h4>
+                )}
+            </Conteudo>
 
-      <ReactModal
-        isOpen={modal}
-        onRequestClose={() => fecharModal()}
-        className="modal"
-        overlayClassName="exterior-modal"
-      >
-        <div className="div-modal">
-          <p>Cadastrar Tecnologias</p>
-          <button onClick={() => fecharModal()}>X</button>
-        </div>
+            <ReactModal
+                isOpen={modal}
+                onRequestClose={() => fecharModal()}
+                className="modal"
+                overlayClassName="exterior-modal"
+            >
+                <div className="div-modal">
+                    <p>Cadastrar Tecnologias</p>
+                    <button onClick={() => fecharModal()}>X</button>
+                </div>
 
-        <FormTec onSubmit={handleSubmit(onSubmitTec)}>
-          <label htmlFor="tecnologia">Nome</label>
-          <input
-            type="text"
-            id="tecnologia"
-            placeholder="Tecnologia"
-            {...register("title")}
-          />
-          <p>{errors.title?.message}</p>
+                <FormTec onSubmit={handleSubmit(onSubmitTec)}>
+                    <label htmlFor="tecnologia">Nome</label>
+                    <input
+                        type="text"
+                        id="tecnologia"
+                        placeholder="Tecnologia"
+                        {...register("title")}
+                    />
+                    <p>{errors.title?.message}</p>
 
-          <label htmlFor="status">Selecionar Status</label>
-          <select {...register("status", { required: true })}>
-            <option value="Iniciante">Iniciante</option>
-            <option value="Intermediário">Intermediário</option>
-            <option value="Iniciante">Avançado</option>
-          </select>
-          <p>{errors.status?.message}</p>
+                    <label htmlFor="status">Selecionar Status</label>
+                    <select {...register("status", { required: true })}>
+                        <option value="Iniciante">Iniciante</option>
+                        <option value="Intermediário">Intermediário</option>
+                        <option value="Iniciante">Avançado</option>
+                    </select>
+                    <p>{errors.status?.message}</p>
 
-          <button type="submit">Cadastrar Tecnologia</button>
-        </FormTec>
-      </ReactModal>
-    </DivPaiDashboard>
-  );
+                    <button type="submit">Cadastrar Tecnologia</button>
+                </FormTec>
+            </ReactModal>
+        </DivPaiDashboard>
+    );
 };
